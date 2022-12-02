@@ -2,47 +2,79 @@
 
 #include "CustomHID.h"
 
-struct Button {
-    static const uint16_t Y = 0x0001;
-    static const uint16_t B = 0x0002;
-    static const uint16_t A = 0x0004;
-    static const uint16_t X = 0x0008;
-    static const uint16_t L = 0x0010;
-    static const uint16_t R = 0x0020;
-    static const uint16_t ZL = 0x0040;
-    static const uint16_t ZR = 0x0080;
-    static const uint16_t MINUS = 0x0100;
-    static const uint16_t PLUS = 0x0200;
-    static const uint16_t LCLICK = 0x0400;
-    static const uint16_t RCLICK = 0x0800;
-    static const uint16_t HOME = 0x1000;
-    static const uint16_t CAPTURE = 0x2000;
+enum KeyType : uint16_t {
+    BTN,
+    HAT,
+    HAT_BTN,
+    L_STICK,
+    R_STICK
 };
 
-struct Hat {
-    static const uint8_t UP = 0x00;
-    static const uint8_t UP_RIGHT = 0x01;
-    static const uint8_t RIGHT = 0x02;
-    static const uint8_t DOWN_RIGHT = 0x03;
-    static const uint8_t DOWN = 0x04;
-    static const uint8_t DOWN_LEFT = 0x05;
-    static const uint8_t LEFT = 0x06;
-    static const uint8_t UP_LEFT = 0x07;
-    static const uint8_t NEUTRAL = 0x08;
+constexpr unsigned long GenKeyCode(const KeyType type, const uint16_t value) {
+    return type << 16 | value;
+}
+
+constexpr unsigned long GenBtnKeyCode(const uint16_t value) {
+    return GenKeyCode(KeyType::BTN, value);
+}
+
+constexpr unsigned long GenHatKeyCode(const uint16_t value) {
+    return GenKeyCode(KeyType::HAT, value);
+}
+
+constexpr unsigned long GenHatBtnKeyCode(const uint16_t value) {
+    return GenKeyCode(KeyType::HAT_BTN, value);
+}
+
+constexpr unsigned long GenLeftStickKeyCode(const uint8_t x, const uint8_t y) {
+    return GenKeyCode(KeyType::L_STICK, x << sizeof(uint8_t) | y);
+}
+
+constexpr unsigned long GenRightStickKeyCode(const uint8_t x, const uint8_t y) {
+    return GenKeyCode(KeyType::R_STICK, x << sizeof(uint8_t) | y);
+}
+
+enum KeyCode : unsigned long {
+    BTN_Y = GenBtnKeyCode(1 << 0),
+    BTN_B = GenBtnKeyCode(1 << 1),
+    BTN_A = GenBtnKeyCode(1 << 2),
+    BTN_X = GenBtnKeyCode(1 << 3),
+    BTN_L = GenBtnKeyCode(1 << 4),
+    BTN_R = GenBtnKeyCode(1 << 5),
+    BTN_ZL = GenBtnKeyCode(1 << 6),
+    BTN_ZR = GenBtnKeyCode(1 << 7),
+    BTN_MINUS = GenBtnKeyCode(1 << 8),
+    BTN_PLUS = GenBtnKeyCode(1 << 9),
+    BTN_LCLICK = GenBtnKeyCode(1 << 10),
+    BTN_RCLICK = GenBtnKeyCode(1 << 11),
+    BTN_HOME = GenBtnKeyCode(1 << 12),
+    BTN_CAPTURE = GenBtnKeyCode(1 << 13),
+
+    HAT_UP = GenHatKeyCode(0),
+    HAT_UP_RIGHT = GenHatKeyCode(1),
+    HAT_RIGHT = GenHatKeyCode(2),
+    HAT_DOWN_RIGHT = GenHatKeyCode(3),
+    HAT_DOWN = GenHatKeyCode(4),
+    HAT_DOWN_LEFT = GenHatKeyCode(5),
+    HAT_LEFT = GenHatKeyCode(6),
+    HAT_UP_LEFT = GenHatKeyCode(7),
+    HAT_NEUTRAL = GenHatKeyCode(8),
+
+    HAT_BTN_UP = GenHatBtnKeyCode(1 << 0),
+    HAT_BTN_RIGHT = GenHatBtnKeyCode(1 << 1),
+    HAT_BTN_DOWN = GenHatBtnKeyCode(1 << 2),
+    HAT_BTN_LEFT = GenHatBtnKeyCode(1 << 3),
 };
 
-struct HatButton {
-    static const uint8_t UP = 0b0001;
-    static const uint8_t RIGHT = 0b0010;
-    static const uint8_t DOWN = 0b0100;
-    static const uint8_t LEFT = 0b1000;
-};
+KeyType GetTypeInKeyCode(KeyCode code) {
+    return KeyType((code >> 16) & 0xFFFF);
+}
 
-struct Stick {
-    static const uint8_t MIN = 0;
-    static const uint8_t NEUTRAL = 128;
-    static const uint8_t MAX = 255;
-};
+uint16_t GetValueInKeyCode(KeyCode code) {
+    return code & 0xFFFF;
+}
+
+// ----------------------------------------------------------------------------
 
 struct USB_JoystickReport_Input_t {
     uint16_t Button;
@@ -53,6 +85,8 @@ struct USB_JoystickReport_Input_t {
     uint8_t RY;
     uint8_t VendorSpec;
 };
+
+// ----------------------------------------------------------------------------
 
 class HatStack {
 private:
@@ -74,6 +108,8 @@ public:
     void erase(uint8_t btn);
 };
 
+// ----------------------------------------------------------------------------
+
 class HatState {
 private:
     HatStack hatStack;
@@ -83,26 +119,29 @@ private:
 public:
     HatState();
 
-    uint8_t pressHatButton(uint8_t hat_button);
-    uint8_t releaseHatButton(uint8_t hat_button);
+    uint8_t pressHatButton(uint8_t hatButton);
+    uint8_t releaseHatButton(uint8_t hatButton);
 };
+
+// ----------------------------------------------------------------------------
 
 class SwitchControlLibrary_ {
 private:
-    USB_JoystickReport_Input_t _joystickInputData;
-    HatState _hatState;
+    USB_JoystickReport_Input_t joystickInputData;
+    HatState hatState;
 
 public:
     SwitchControlLibrary_();
 
     void sendReport();
 
+    void Press(KeyCode code);
     void pressButton(uint16_t button);
     void releaseButton(uint16_t button);
 
     void moveHat(uint8_t hat);
-    void pressHatButton(uint8_t hat_button);
-    void releaseHatButton(uint8_t hat_button);
+    void pressHatButton(uint8_t hatButton);
+    void releaseHatButton(uint8_t hatButton);
 
     void moveLeftStick(uint8_t lx, uint8_t ly);
     void moveRightStick(uint8_t rx, uint8_t ry);

@@ -46,6 +46,8 @@ static const uint8_t _hidReportDescriptor[] PROGMEM = {
     0xc0              // END_COLLECTION
 };
 
+// ----------------------------------------------------------------------------
+
 HatStack::HatStack() {
     buttons = new uint8_t[MAX_BTN_CAPABILITY];
 }
@@ -155,13 +157,13 @@ uint8_t HatState::getHat() {
 
 HatState::HatState() {}
 
-uint8_t HatState::pressHatButton(uint8_t hat_button) {
-    hatStack.push(hat_button);
+uint8_t HatState::pressHatButton(uint8_t hatButton) {
+    hatStack.push(hatButton);
     return getHat();
 }
 
-uint8_t HatState::releaseHatButton(uint8_t hat_button) {
-    hatStack.erase(hat_button);
+uint8_t HatState::releaseHatButton(uint8_t hatButton) {
+    hatStack.erase(hatButton);
     return getHat();
 }
 
@@ -171,46 +173,76 @@ SwitchControlLibrary_::SwitchControlLibrary_() {
     static HIDSubDescriptor node(_hidReportDescriptor, sizeof(_hidReportDescriptor));
     CustomHID().AppendDescriptor(&node);
 
-    memset(&_joystickInputData, 0, sizeof(USB_JoystickReport_Input_t));
-    _joystickInputData.LX = Stick::NEUTRAL;
-    _joystickInputData.LY = Stick::NEUTRAL;
-    _joystickInputData.RX = Stick::NEUTRAL;
-    _joystickInputData.RY = Stick::NEUTRAL;
-    _joystickInputData.Hat = Hat::NEUTRAL;
+    memset(&joystickInputData, 0, sizeof(USB_JoystickReport_Input_t));
+
+    uint16_t neturalValue = GetValueInKeyCode(KeyCode::STICK_NEUTRAL);
+    joystickInputData.LX = neturalValue;
+    joystickInputData.LY = neturalValue;
+    joystickInputData.RX = neturalValue;
+    joystickInputData.RY = neturalValue;
+    joystickInputData.Hat = GetValueInKeyCode(KeyCode::HAT_NEUTRAL);
 }
 
 void SwitchControlLibrary_::sendReport() {
-    CustomHID().SendReport(&_joystickInputData, sizeof(USB_JoystickReport_Input_t));
+    CustomHID().SendReport(&joystickInputData, sizeof(USB_JoystickReport_Input_t));
+}
+
+void SwitchControlLibrary_::Press(KeyCode code) {
+    KeyType type = GetTypeInKeyCode(code);
+    uint16_t value = GetValueInKeyCode(code);
+
+    switch (type) {
+    case KeyType::BTN:
+        joystickInputData.Button |= value;
+        break;
+    case KeyType::HAT:
+        joystickInputData.Hat = value;
+        break;
+    case KeyType::HAT_BTN:
+        joystickInputData.Hat = hatState.pressHatButton(value);
+        break;
+    case KeyType::L_STICK:
+        joystickInputData.LX = (value >> sizeof(uint8_t)) & 0xFF;
+        joystickInputData.LY = value & 0xFF;
+        break;
+    case KeyType::R_STICK:
+        joystickInputData.RX = (value >> sizeof(uint8_t)) & 0xFF;
+        joystickInputData.RY = value & 0xFF;
+        break;
+
+    default:
+        break;
+    }
 }
 
 void SwitchControlLibrary_::pressButton(uint16_t button) {
-    _joystickInputData.Button |= button;
+    joystickInputData.Button |= button;
 }
 
 void SwitchControlLibrary_::releaseButton(uint16_t button) {
-    _joystickInputData.Button &= (button ^ 0xffff);
+    joystickInputData.Button &= (button ^ 0xFFFF);
 }
 
 void SwitchControlLibrary_::moveHat(uint8_t hat) {
-    _joystickInputData.Hat = hat;
+    joystickInputData.Hat = hat;
 }
 
 void SwitchControlLibrary_::pressHatButton(uint8_t hat_button) {
-    _joystickInputData.Hat = _hatState.pressHatButton(hat_button);
+    joystickInputData.Hat = hatState.pressHatButton(hat_button);
 }
 
 void SwitchControlLibrary_::releaseHatButton(uint8_t hat_button) {
-    _joystickInputData.Hat = _hatState.releaseHatButton(hat_button);
+    joystickInputData.Hat = hatState.releaseHatButton(hat_button);
 }
 
 void SwitchControlLibrary_::moveLeftStick(uint8_t lx, uint8_t ly) {
-    _joystickInputData.LX = lx;
-    _joystickInputData.LY = ly;
+    joystickInputData.LX = lx;
+    joystickInputData.LY = ly;
 }
 
 void SwitchControlLibrary_::moveRightStick(uint8_t rx, uint8_t ry) {
-    _joystickInputData.RX = rx;
-    _joystickInputData.RY = ry;
+    joystickInputData.RX = rx;
+    joystickInputData.RY = ry;
 }
 
 SwitchControlLibrary_ &SwitchControlLibrary() {
