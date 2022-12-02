@@ -46,19 +46,79 @@ static const uint8_t _hidReportDescriptor[] PROGMEM = {
     0xc0              // END_COLLECTION
 };
 
-uint8_t HatState::getHat()
-{
+HatStack::HatStack() {
+    buttons = new uint8_t[MAX_BTN_CAPABILITY];
+}
 
+HatStack::~HatStack() {
+    delete[] buttons;
+}
+
+uint8_t HatStack::get(int index) {
+    uint8_t value = 0;
+    if (index < 0 && -index < top + 1) {
+        value = buttons[top + index];
+    } else if (index > 0 && index < top + 1) {
+        value = buttons[index];
+    }
+
+    return value;
+}
+
+int HatStack::size() {
+    return top + 1;
+}
+
+bool HatStack::push(uint8_t btn) {
+    bool ok = false;
+
+    if (!contains(btn) and top + 1 < MAX_BTN_CAPABILITY) {
+        ok = true;
+        ++top;
+        buttons[top] = btn;
+    }
+
+    return ok;
+}
+
+void HatStack::erase(uint8_t btn) {
+    for (int cur = 0; cur <= top; ++cur) {
+        if (buttons[cur] != btn) {
+            continue;
+        }
+
+        for (int i = cur; i < top; ++i) {
+            buttons[i] = buttons[i + 1];
+        }
+        --top;
+        break;
+    }
+}
+
+bool HatStack::contains(uint8_t btn) {
+    bool isFound = false;
+
+    for (int i = 0; i <= top; ++i) {
+        if (buttons[i] == btn) {
+            isFound = true;
+            break;
+        }
+    }
+
+    return isFound;
+}
+
+// ----------------------------------------------------------------------------
+
+uint8_t HatState::getHat() {
     uint8_t hat_button = 0b0000;
-    uint8_t i = 0;
-    for (auto itr = _hat_button_state.begin(); itr != _hat_button_state.end() && i < 2; ++itr, ++i)
-    {
-        hat_button |= *itr;
+    // taks only 2 latest pressed key
+    for (int i = 1; i <= 2; ++i) {
+        hat_button |= hatStack.get(-i);
     }
 
     uint8_t hat = Hat::NEUTRAL;
-    switch (hat_button)
-    {
+    switch (hat_button) {
     case 0b0000:
         hat = Hat::NEUTRAL;
         break;
@@ -93,33 +153,21 @@ uint8_t HatState::getHat()
     return hat;
 }
 
-HatState::HatState()
-{
-}
+HatState::HatState() {}
 
-uint8_t HatState::pressHatButton(uint8_t hat_button)
-{
-    auto itr = std::find(_hat_button_state.begin(), _hat_button_state.end(), hat_button);
-    if (itr == _hat_button_state.end())
-    {
-        _hat_button_state.push_front(hat_button);
-    }
-
+uint8_t HatState::pressHatButton(uint8_t hat_button) {
+    hatStack.push(hat_button);
     return getHat();
 }
 
-uint8_t HatState::releaseHatButton(uint8_t hat_button)
-{
-    auto itr = std::find(_hat_button_state.begin(), _hat_button_state.end(), hat_button);
-    if (itr != _hat_button_state.end())
-    {
-        _hat_button_state.erase(itr);
-    }
+uint8_t HatState::releaseHatButton(uint8_t hat_button) {
+    hatStack.erase(hat_button);
     return getHat();
 }
 
-SwitchControlLibrary_::SwitchControlLibrary_()
-{
+// ----------------------------------------------------------------------------
+
+SwitchControlLibrary_::SwitchControlLibrary_() {
     static HIDSubDescriptor node(_hidReportDescriptor, sizeof(_hidReportDescriptor));
     CustomHID().AppendDescriptor(&node);
 
@@ -131,50 +179,41 @@ SwitchControlLibrary_::SwitchControlLibrary_()
     _joystickInputData.Hat = Hat::NEUTRAL;
 }
 
-void SwitchControlLibrary_::sendReport()
-{
+void SwitchControlLibrary_::sendReport() {
     CustomHID().SendReport(&_joystickInputData, sizeof(USB_JoystickReport_Input_t));
 }
 
-void SwitchControlLibrary_::pressButton(uint16_t button)
-{
+void SwitchControlLibrary_::pressButton(uint16_t button) {
     _joystickInputData.Button |= button;
 }
 
-void SwitchControlLibrary_::releaseButton(uint16_t button)
-{
+void SwitchControlLibrary_::releaseButton(uint16_t button) {
     _joystickInputData.Button &= (button ^ 0xffff);
 }
 
-void SwitchControlLibrary_::moveHat(uint8_t hat)
-{
+void SwitchControlLibrary_::moveHat(uint8_t hat) {
     _joystickInputData.Hat = hat;
 }
 
-void SwitchControlLibrary_::pressHatButton(uint8_t hat_button)
-{
+void SwitchControlLibrary_::pressHatButton(uint8_t hat_button) {
     _joystickInputData.Hat = _hatState.pressHatButton(hat_button);
 }
 
-void SwitchControlLibrary_::releaseHatButton(uint8_t hat_button)
-{
+void SwitchControlLibrary_::releaseHatButton(uint8_t hat_button) {
     _joystickInputData.Hat = _hatState.releaseHatButton(hat_button);
 }
 
-void SwitchControlLibrary_::moveLeftStick(uint8_t lx, uint8_t ly)
-{
+void SwitchControlLibrary_::moveLeftStick(uint8_t lx, uint8_t ly) {
     _joystickInputData.LX = lx;
     _joystickInputData.LY = ly;
 }
 
-void SwitchControlLibrary_::moveRightStick(uint8_t rx, uint8_t ry)
-{
+void SwitchControlLibrary_::moveRightStick(uint8_t rx, uint8_t ry) {
     _joystickInputData.RX = rx;
     _joystickInputData.RY = ry;
 }
 
-SwitchControlLibrary_ &SwitchControlLibrary()
-{
+SwitchControlLibrary_ &SwitchControlLibrary() {
     static SwitchControlLibrary_ obj;
     return obj;
 }

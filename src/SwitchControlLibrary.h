@@ -1,12 +1,8 @@
 #pragma once
 
-#include <ArduinoSTL.h>
-#include <list>
-
 #include "CustomHID.h"
 
-struct Button
-{
+struct Button {
     static const uint16_t Y = 0x0001;
     static const uint16_t B = 0x0002;
     static const uint16_t A = 0x0004;
@@ -23,8 +19,7 @@ struct Button
     static const uint16_t CAPTURE = 0x2000;
 };
 
-struct Hat
-{
+struct Hat {
     static const uint8_t UP = 0x00;
     static const uint8_t UP_RIGHT = 0x01;
     static const uint8_t RIGHT = 0x02;
@@ -36,23 +31,20 @@ struct Hat
     static const uint8_t NEUTRAL = 0x08;
 };
 
-struct HatButton
-{
+struct HatButton {
     static const uint8_t UP = 0b0001;
     static const uint8_t RIGHT = 0b0010;
     static const uint8_t DOWN = 0b0100;
     static const uint8_t LEFT = 0b1000;
 };
 
-struct Stick
-{
+struct Stick {
     static const uint8_t MIN = 0;
     static const uint8_t NEUTRAL = 128;
     static const uint8_t MAX = 255;
 };
 
-typedef struct
-{
+struct USB_JoystickReport_Input_t {
     uint16_t Button;
     uint8_t Hat;
     uint8_t LX;
@@ -60,12 +52,31 @@ typedef struct
     uint8_t RX;
     uint8_t RY;
     uint8_t VendorSpec;
-} USB_JoystickReport_Input_t;
+};
 
-class HatState
-{
+class HatStack {
 private:
-    std::list<uint8_t> _hat_button_state;
+    uint8_t *buttons;
+    int top = -1;
+
+public:
+    // hat button can give 8 direction in total
+    static const int MAX_BTN_CAPABILITY = 8;
+
+    HatStack();
+    ~HatStack();
+
+    uint8_t get(int index);
+    int size();
+    bool contains(uint8_t btn);
+
+    bool push(uint8_t btn);
+    void erase(uint8_t btn);
+};
+
+class HatState {
+private:
+    HatStack hatStack;
 
     uint8_t getHat();
 
@@ -76,8 +87,7 @@ public:
     uint8_t releaseHatButton(uint8_t hat_button);
 };
 
-class SwitchControlLibrary_
-{
+class SwitchControlLibrary_ {
 private:
     USB_JoystickReport_Input_t _joystickInputData;
     HatState _hatState;
