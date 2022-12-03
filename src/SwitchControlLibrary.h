@@ -2,8 +2,13 @@
 
 #include "CustomHID.h"
 #include "keycode.h"
+#include <Arduino.h>
 
 namespace switch_controller {
+    KeyType GetTypeInKeyCode(KeyCode code);
+    uint16_t GetValueInKeyCode(KeyCode code);
+    const char *GetNameOfKeyCode(KeyCode code);
+
     struct USB_JoystickReport_Input_t {
         uint16_t button;
         uint8_t hat;
@@ -14,7 +19,7 @@ namespace switch_controller {
         uint8_t vendorSpec;
     };
 
-    // ----------------------------------------------------------------------------
+    // ------------------------------------------------------------------------
 
     class HatStack {
     private:
@@ -30,13 +35,13 @@ namespace switch_controller {
 
         uint8_t Get(int index);
         int Size();
-        bool Contains(uint8_t btn);
+        int Contains(uint8_t btn);
 
         bool Push(uint8_t btn);
         void Erase(uint8_t btn);
     };
 
-    // ----------------------------------------------------------------------------
+    // ------------------------------------------------------------------------
 
     class HatState {
     private:
@@ -51,7 +56,7 @@ namespace switch_controller {
         uint8_t Release(uint8_t hatButton);
     };
 
-    // ----------------------------------------------------------------------------
+    // ------------------------------------------------------------------------
 
     class SwitchController {
     private:
@@ -66,7 +71,10 @@ namespace switch_controller {
         void Press(KeyCode code);
         void Release(KeyCode code);
 
-        // ------------------------------------------------------------------------
+        void Press(unsigned long code);
+        void Release(unsigned long code);
+
+        // --------------------------------------------------------------------
 
         void PressButton(uint16_t button);
         void ReleaseButton(uint16_t button);

@@ -46,6 +46,43 @@ static const uint8_t _hidReportDescriptor[] PROGMEM = {
     0xc0              // END_COLLECTION
 };
 
+switch_controller::KeyType switch_controller::GetTypeInKeyCode(KeyCode code) {
+    return KeyType(((unsigned long)code >> 16) & 0xFFFF);
+}
+
+uint16_t switch_controller::GetValueInKeyCode(KeyCode code) {
+    return (unsigned long)code & 0xFFFF;
+}
+
+const char *switch_controller::GetNameOfKeyCode(KeyCode code) {
+    KeyType type = GetTypeInKeyCode(code);
+
+    const char *name = nullptr;
+    switch (type) {
+    case KeyType::BTN:
+        name = "btn";
+        break;
+    case KeyType::HAT:
+        name = "hat";
+        break;
+    case KeyType::HAT_BTN:
+        name = "hat-btn";
+        break;
+    case KeyType::L_STICK:
+        name = "l-stick";
+        break;
+    case KeyType::R_STICK:
+        name = "r-stick";
+        break;
+        
+    default:
+        name = "unknown";
+        break;
+    }
+
+    return name;
+}
+
 // ----------------------------------------------------------------------------
 
 switch_controller::HatStack::HatStack() {
@@ -58,9 +95,9 @@ switch_controller::HatStack::~HatStack() {
 
 uint8_t switch_controller::HatStack::Get(int index) {
     uint8_t value = 0;
-    if (index < 0 && -index < top + 1) {
-        value = buttons[top + index];
-    } else if (index > 0 && index < top + 1) {
+    if (index < 0 && -index <= top + 1) {
+        value = buttons[top + 1 + index];
+    } else if (index >= 0 && index < top + 1) {
         value = buttons[index];
     }
 
@@ -74,7 +111,7 @@ int switch_controller::HatStack::Size() {
 bool switch_controller::HatStack::Push(uint8_t btn) {
     bool ok = false;
 
-    if (!Contains(btn) and top + 1 < MAX_BTN_CAPABILITY) {
+    if (Contains(btn) < 0 and top + 1 < MAX_BTN_CAPABILITY) {
         ok = true;
         ++top;
         buttons[top] = btn;
@@ -84,25 +121,22 @@ bool switch_controller::HatStack::Push(uint8_t btn) {
 }
 
 void switch_controller::HatStack::Erase(uint8_t btn) {
-    for (int cur = 0; cur <= top; ++cur) {
-        if (buttons[cur] != btn) {
-            continue;
-        }
+    int index = Contains(btn);
 
-        for (int i = cur; i < top; ++i) {
+    if (index >= 0) {
+        for (int i = index; i < top; ++i) {
             buttons[i] = buttons[i + 1];
         }
         --top;
-        break;
     }
 }
 
-bool switch_controller::HatStack::Contains(uint8_t btn) {
-    bool isFound = false;
+int switch_controller::HatStack::Contains(uint8_t btn) {
+    int isFound = -1;
 
     for (int i = 0; i <= top; ++i) {
         if (buttons[i] == btn) {
-            isFound = true;
+            isFound = i;
             break;
         }
     }
@@ -159,12 +193,12 @@ switch_controller::HatState::HatState() {}
 
 uint8_t switch_controller::HatState::Press(uint8_t hatButton) {
     hatStack.Push(hatButton);
-    return GetHat();
+    return (int8_t)GetHat();
 }
 
 uint8_t switch_controller::HatState::Release(uint8_t hatButton) {
     hatStack.Erase(hatButton);
-    return GetHat();
+    return (int8_t)GetHat();
 }
 
 // ----------------------------------------------------------------------------
@@ -175,11 +209,11 @@ switch_controller::SwitchController::SwitchController() {
 
     memset(&inputData, 0, sizeof(USB_JoystickReport_Input_t));
 
-    inputData.lx = Stick::NEUTRAL;
-    inputData.ly = Stick::NEUTRAL;
-    inputData.rx = Stick::NEUTRAL;
-    inputData.ry = Stick::NEUTRAL;
-    inputData.hat = Hat::NEUTRAL;
+    inputData.lx = (int8_t)Stick::NEUTRAL;
+    inputData.ly = (int8_t)Stick::NEUTRAL;
+    inputData.rx = (int8_t)Stick::NEUTRAL;
+    inputData.ry = (int8_t)Stick::NEUTRAL;
+    inputData.hat = (int8_t)Hat::NEUTRAL;
 }
 
 void switch_controller::SwitchController::SendReport() {
@@ -227,21 +261,21 @@ void switch_controller::SwitchController::Release(KeyCode code) {
         ReleaseButton(value);
         break;
     case KeyType::HAT:
-        MoveHat(Hat::NEUTRAL);
+        MoveHat((int8_t)Hat::NEUTRAL);
         break;
     case KeyType::HAT_BTN:
-        ReleaseButton(value);
+        ReleaseHatButton(value);
         break;
     case KeyType::L_STICK:
         MoveLeftStick(
-            Stick::NEUTRAL,
-            Stick::NEUTRAL
+            (int8_t)Stick::NEUTRAL,
+            (int8_t)Stick::NEUTRAL
         );
         break;
     case KeyType::R_STICK:
         MoveRightStick(
-            Stick::NEUTRAL,
-            Stick::NEUTRAL
+            (int8_t)Stick::NEUTRAL,
+            (int8_t)Stick::NEUTRAL
         );
 
         break;
@@ -251,6 +285,13 @@ void switch_controller::SwitchController::Release(KeyCode code) {
     }
 }
 
+void switch_controller::SwitchController::Press(unsigned long code) {
+    Press((KeyCode)code);
+}
+
+void switch_controller::SwitchController::Release(unsigned long code) {
+    Release((KeyCode)code);
+}
 // ----------------------------------------------------------------------------
 
 void switch_controller::SwitchController::PressButton(uint16_t button) {
