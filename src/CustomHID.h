@@ -1,8 +1,11 @@
 #pragma once
 
+#include "USB/PluggableUSB.h"
 #include <HID.h>
 
 #if defined(USBCON)
+
+#define TRANSFER_RELEASE 0x40
 
 class CustomHID_ : public HID_
 {
