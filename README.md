@@ -7,7 +7,7 @@ This package enable Arduino to act as a Switch controller.
 ## Prerequest
 
 This package have following dependency(ies),
-make sure you have the right version installed:
+make sure you have the right version installed before using it:
 
 ```
 TinyUSB == 0.10.5
@@ -28,7 +28,7 @@ You should change VID and PID in your boards.txt into one of following:
 
 (Both `KeyType` and `KeyCode` are defined under name space `switch_controller`)
 
-This library provide following key type:
+This package provide following key type:
 
 ```cpp
 enum class KeyType {
@@ -44,6 +44,7 @@ A KeyCode's under lying type is an unsigned 32-bit int i.e. `unsigned long`.
 
 Key code for joy stick need to be composed directly into a 32-bit int value,
 for more detail read API section.
+
 Key codes for buttons are given as follow:
 
 ```cpp
@@ -81,7 +82,7 @@ enum KeyCode : unsigned long {
 ```
 ## API                     
                            
-All APIs and type are defi ned under name space `switch_controller`.
+All APIs and type are defined under name space `switch_controller`.
 
 APIs are encapsulated into static singleton `controller`.
 It's of type `SwitchController`.
@@ -109,8 +110,8 @@ There are tow major parts of API.
 ### Specified
 
 Each of APIs in this part deals with one specific key type.
-And you don't need to use any KeyCode to call them.
 At the mean time, this package provide enum type for each key type.
+You don't need to use any KeyCode to call those APIs.
 
 To convert between KeyCode and those dedicated type,
 this package provides following functoins:
@@ -156,7 +157,7 @@ constexpr unsigned long GenRightStickKeyCode(const Stick x, const Stick y);
   ```
 - Cross Key
 
-  When you need to press two direction at a time.
+  When you need to press 2 directions at a time.
 
   ```cpp
   void SetCross(Cross cross);
