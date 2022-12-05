@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Arduino.h>
+
 namespace switch_controller {
     enum class Button : uint16_t {
         Y = 1 << 0,
