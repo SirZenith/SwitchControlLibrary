@@ -1,4 +1,4 @@
-#include "SwitchControlLibrary.h"
+#include "SwitchController.h"
 
 switch_controller::KeyType switch_controller::GetTypeInKeyCode(KeyCode code) {
     return KeyType(((unsigned long)code >> 16) & 0xFFFF);
@@ -16,10 +16,10 @@ const char *switch_controller::GetNameOfKeyCode(KeyCode code) {
     case KeyType::BTN:
         name = "btn";
         break;
-    case KeyType::HAT:
+    case KeyType::CROSS:
         name = "hat";
         break;
-    case KeyType::HAT_BTN:
+    case KeyType::CROSS_BTN:
         name = "hat-btn";
         break;
     case KeyType::L_STICK:
@@ -49,7 +49,7 @@ switch_controller::SwitchController::SwitchController() {
     inputData.ly = (int8_t)Stick::NEUTRAL;
     inputData.rx = (int8_t)Stick::NEUTRAL;
     inputData.ry = (int8_t)Stick::NEUTRAL;
-    inputData.hat = (int8_t)Hat::NEUTRAL;
+    inputData.hat = (int8_t)Cross::NEUTRAL;
 }
 
 void switch_controller::SwitchController::SendReport() {
@@ -62,13 +62,13 @@ void switch_controller::SwitchController::Press(KeyCode code) {
 
     switch (type) {
     case KeyType::BTN:
-        PressButton(value);
+        PressButton((Button)value);
         break;
-    case KeyType::HAT:
-        MoveHat(value);
+    case KeyType::CROSS:
+        SetCross((Cross)value);
         break;
-    case KeyType::HAT_BTN:
-        PressHatButton(value);
+    case KeyType::CROSS_BTN:
+        PressCrossButton((CrossButton)value);
         break;
     case KeyType::L_STICK:
         MoveLStick(
@@ -94,13 +94,13 @@ void switch_controller::SwitchController::Release(KeyCode code) {
 
     switch (type) {
     case KeyType::BTN:
-        ReleaseButton(value);
+        ReleaseButton((Button)value);
         break;
-    case KeyType::HAT:
-        MoveHat((int8_t)Hat::NEUTRAL);
+    case KeyType::CROSS:
+        SetCross(Cross::NEUTRAL);
         break;
-    case KeyType::HAT_BTN:
-        ReleaseHatButton(value);
+    case KeyType::CROSS_BTN:
+        ReleaseCrossButton((CrossButton)value);
         break;
     case KeyType::L_STICK:
         MoveLStick(
@@ -131,26 +131,26 @@ void switch_controller::SwitchController::Release(unsigned long code) {
 
 // ----------------------------------------------------------------------------
 
-void switch_controller::SwitchController::PressButton(uint16_t button) {
-    inputData.button |= button;
+void switch_controller::SwitchController::PressButton(Button button) {
+    inputData.button |= (uint16_t)button;
 }
 
-void switch_controller::SwitchController::ReleaseButton(uint16_t button) {
-    inputData.button &= (button ^ 0xFFFF);
+void switch_controller::SwitchController::ReleaseButton(Button button) {
+    inputData.button &= ((uint16_t)button ^ 0xFFFF);
 }
 
 // ----------------------------------------------------------------------------
 
-void switch_controller::SwitchController::MoveHat(uint8_t hat) {
-    inputData.hat = hat;
+void switch_controller::SwitchController::SetCross(Cross hat) {
+    inputData.hat = (uint8_t)hat;
 }
 
-void switch_controller::SwitchController::PressHatButton(uint8_t hatButton) {
-    inputData.hat = (uint8_t)hatState.Press(hatButton);
+void switch_controller::SwitchController::PressCrossButton(CrossButton btn) {
+    inputData.hat = (uint8_t)hatState.Press((uint8_t)btn);
 }
 
-void switch_controller::SwitchController::ReleaseHatButton(uint8_t hatButton) {
-    inputData.hat = (uint8_t)hatState.Release(hatButton);
+void switch_controller::SwitchController::ReleaseCrossButton(CrossButton btn) {
+    inputData.hat = (uint8_t)hatState.Release((uint8_t)btn);
 }
 
 // ----------------------------------------------------------------------------

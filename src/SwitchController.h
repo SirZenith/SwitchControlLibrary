@@ -85,12 +85,13 @@ namespace switch_controller {
 
         // --------------------------------------------------------------------
 
-        void PressButton(uint16_t button);
-        void ReleaseButton(uint16_t button);
+        void PressButton(Button button);
+        void ReleaseButton(Button button);
 
-        void MoveHat(uint8_t hat);
-        void PressHatButton(uint8_t hatButton);
-        void ReleaseHatButton(uint8_t hatButton);
+        void SetCross(Cross cross);
+
+        void PressCrossButton(CrossButton btn);
+        void ReleaseCrossButton(CrossButton btn);
 
         void MoveLStick(uint8_t x, uint8_t y);
         void MoveRStick(uint8_t x, uint8_t y);
@@ -101,6 +102,5 @@ namespace switch_controller {
         Adafruit_USBD_HID hid;
     };
 
+    static SwitchController controller;
 };
-
-switch_controller::SwitchController &SwitchController();

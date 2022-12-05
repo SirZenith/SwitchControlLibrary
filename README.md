@@ -1,129 +1,224 @@
-# Switch Control Library
+# Switch Controller Package
 
-## 概要
+## Introduction
 
-Arduino を Switch コントローラーとして認識させます。
+This package enable Arduino to act as a Switch controller.
 
-**v2 系 は v1 系とは互換性がありません。**
-過去バージョンは[Release](https://github.com/celclow/SwitchControlLibrary/releases)ページよりダウンロードできます。
+## Prerequest
 
-## 使い方
+This package have following dependency(ies),
+make sure you have the right version installed:
 
-VID=0x0f0d, PID=0x0092 へ変更してボードへ書き込んでください。
+```
+TinyUSB == 0.10.5
+```
 
-変更方法はボードによって異なりますが、SparkFun Pro Micro の場合、下記ファイルを変更してください。
-`~/Library/Arduino15/packages/SparkFun/hardware/avr/1.1.12/boards.txt`
+And before compiling and uploading your sketch onto you board.
+You should change VID and PID in your boards.txt into one of following:
 
-## 操作方法
+|            Device Name            |  VID   |  PID   |
+|:---------------------------------:|:------:|:------:|
+| HORI HORIPAD for Nintendo Switch  | 0x0f0d | 0x00c1 |
+| HORI Pokken Tournament DX Pro Pad | 0x0f0d | 0x0092 |
+|  Nintendo Switch Pro Controller   | 0x057e | 0x2009 |
+|  Nintendo Switch Joy-Con (Right)  | 0x057e | 0x2007 |
+|  Nintendo Switch Joy-Con (Left)   | 0x057e | 0x2006 |
 
-- ボタンを押す
+## Key Type and Key Code
 
-  - `pressButton(uint8_t button)`
+(Both `KeyType` and `KeyCode` are defined under name space `switch_controller`)
 
-    ```
-    SwitchControlLibrary().pressButton(Button::A); // Aボタンを押す
-    SwitchControlLibrary().pressButton(Button::B); // Bボタンを押す
-    ```
+This library provide following key type:
 
-  - `releaseButton(uint8_t button)`
+```cpp
+enum class KeyType {
+    BTN,       // buttons other cross button.
+    CROSS,     // possiblely combined severial cross button.
+    CROSS_BTN, // one direction of cross button.
+    L_STICK,   // left joy stick.
+    R_STICK    // right joy stick.
+};
+```
 
-    ```
-    SwitchControlLibrary().releaseButton(Button::A); // Aボタンを離す
-    SwitchControlLibrary().releaseButton(Button::B); // Bボタンを離す
-    ```
+A KeyCode's under lying type is an unsigned 32-bit int i.e. `unsigned long`.
 
-  - `Button` 定義一覧
+Key code for joy stick need to be composed directly into a 32-bit int value,
+for more detail read API section.
+Key codes for buttons are given as follow:
 
-    ```
-    Button::Y
-    Button::B
-    Button::A
-    Button::X
-    Button::L
-    Button::R
-    Button::ZL
-    Button::ZR
-    Button::MINUS
-    Button::PLUS
-    Button::LCLICK
-    Button::RCLICK
-    Button::HOME
-    Button::CAPTURE
-    ```
+```cpp
+enum KeyCode : unsigned long {
+    BTN_Y,
+    BTN_B,
+    BTN_A,
+    BTN_X,
+    BTN_L,
+    BTN_R,
+    BTN_ZL,
+    BTN_ZR,
+    BTN_MINUS,
+    BTN_PLUS,
+    BTN_LCLICK,
+    BTN_RCLICK,
+    BTN_HOME,
+    BTN_CAPTURE,
 
-- ハット
+    CROSS_UP,
+    CROSS_UP_RIGHT,
+    CROSS_RIGHT,
+    CROSS_DOWN_RIGHT,
+    CROSS_DOWN,
+    CROSS_DOWN_LEFT,
+    CROSS_LEFT,
+    CROSS_UP_LEFT,
+    CROSS_NEUTRAL,
 
-  - `moveHat(uint8_t hat)`
+    CROSS_BTN_UP,
+    CROSS_BTN_RIGHT,
+    CROSS_BTN_DOWN,
+    CROSS_BTN_LEFT,
+};
+```
+## API                     
+                           
+All APIs and type are defi ned under name space `switch_controller`.
 
-    ```
-    SwitchControlLibrary().moveHat(Hat::UP); // ハットは上
-    SwitchControlLibrary().moveHat(Hat::RIGHT); // ハットは右
-    ```
+APIs are encapsulated into static singleton `controller`.
+It's of type `SwitchController`.
 
-  - `Hat` 定義一覧
+No key press/release will be send until you trigger report sending.
+Remember to call `SendReport` on controller when you need you keys to take effect.
 
-    ```
-    Hat::UP
-    Hat::UP_RIGHT
-    Hat::RIGHT
-    Hat::DOWN_RIGHT
-    Hat::DOWN
-    Hat::DOWN_LEFT
-    Hat::LEFT
-    Hat::UP_LEFT
-    Hat::NEUTRAL
-    ```
+```cpp
+using switch_controller::controller;
 
-  - `pressHat(uint8_t hat_button)` `releaseHat(uint8_t hat_button)`
+// press L and R button at the same time.
+controller.Press(KeyCode::BTN_L);
+controller.Press(KeyCode::BTN_R);
+controller.SendReport();
 
-    ```
-    SwitchControlLibrary().pressHat(HatButton::UP) // ハットは上
-    SwitchControlLibrary().pressHat(HatButton::RIGHT) // ハットは右上
-    SwitchControlLibrary().releaseHat(HatButton::UP) // ハットは右
-    SwitchControlLibrary().releaseHat(HatButton::RIGHT) // ハットはニュートラル
-    ```
+delay(100);
 
-  - `HatButton` 定義一覧
+controller.Release(KeyCode::BTN_L);
+controller.Release(KeyCode::BTN_R);
+controller.SendReport();
+```
 
-    ```
-    HatButton::UP
-    HatButton::RIGHT
-    HatButton::DOWN
-    HatButton::LEFT
-    ```
+There are tow major parts of API.
 
-- スティック
+### Specified
 
-  - `moveLeftStick(uint8_t lx, uint8_t ly)` `moveRightStick(uint8_t rx, uint8_t ry)`
+Each of APIs in this part deals with one specific key type.
+And you don't need to use any KeyCode to call them.
+At the mean time, this package provide enum type for each key type.
 
-    - `lx` `ly` `rx` `ry` には、0〜255 の値を指定します。
+To convert between KeyCode and those dedicated type,
+this package provides following functoins:
 
-    ```
-    SwitchControlLibrary().moveLeftStick(0, 128) // 左スティックは左
-    SwitchControlLibrary().moveLeftStick(128, 128) // 左スティックはニュートラル
-    SwitchControlLibrary().moveLeftStick(255, 128) // 左スティックは右
-    SwitchControlLibrary().moveLeftStick(Stick::MIN, Stick::NEUTRAL) // 左スティックは左
-    SwitchControlLibrary().moveLeftStick(Stick::MAX, Stick::NEUTRAL) // 左スティックは右
-    ```
+```cpp
+// from KeyCode
+KeyType GetTypeInKeyCode(KeyCode code);
+uint16_t GetValueInKeyCode(KeyCode code);
 
-  - `Stick` 定義一覧
+// to KeyCode
+constexpr unsigned long GenKeyCode(const KeyType type, const uint16_t value);
+constexpr unsigned long GenBtnKeyCode(const uint16_t value);
+constexpr unsigned long GenHatKeyCode(const uint16_t value);
+constexpr unsigned long GenHatBtnKeyCode(const uint16_t value);
+constexpr unsigned long GenLeftStickKeyCode(const uint8_t x, const uint8_t y);
+constexpr unsigned long GenLeftStickKeyCode(const Stick x, const Stick y);
+constexpr unsigned long GenRightStickKeyCode(const uint8_t x, const uint8_t y);
+constexpr unsigned long GenRightStickKeyCode(const Stick x, const Stick y);
+```
 
-    ```
-    Stick::MIN
-    Stick::NEUTRAL
-    Stick::MAX
-    ```
+- Button
 
-- `sendReport()`
+  ```cpp
+  void PressButton(Button button);
+  void ReleaseButton(Button button);
 
-  `sendReport()` を実行したタイミングでキーが送信されます。
-
+  enum class Button : uint16_t {
+      Y,
+      B,
+      A,
+      X,
+      L,
+      R,
+      ZL,
+      ZR,
+      MINUS,
+      PLUS,
+      LCLICK,
+      RCLICK,
+      HOME,
+      CAPTURE,
+  };
   ```
-  SwitchControlLibrary().pressButton(Button::A); // ニュートラル
-  SwitchControlLibrary().pressButton(Button::B); // ニュートラル
-  SwitchControlLibrary().sendReport() // A、Bボタンが同時に送信される
+- Cross Key
+
+  When you need to press two direction at a time.
+
+  ```cpp
+  void SetCross(Cross cross);
+
+  enum class Cross : uint8_t {
+      UP,
+      UP_RIGHT,
+      RIGHT,
+      DOWN_RIGHT,
+      DOWN,
+      DOWN_LEFT,
+      LEFT,
+      UP_LEFT,
+      NEUTRAL,
+  };
   ```
 
-## ライセンス
+  When only 1 direction is needed:
 
-[MIT](https://github.com/celclow/SwitchControlLibrary/blob/master/LICENSE)
+  ```cpp
+  void PressCrossButton(CrossButton btn);
+  void ReleaseCrossButton(CrossButton btn);
+
+  enum class CrossButton : uint8_t {
+      UP,
+      RIGHT,
+      DOWN,
+      LEFT,
+  };
+  ```
+- Joy Stick
+
+  ```cpp
+  void MoveLStick(uint8_t x, uint8_t y);
+  void MoveRStick(uint8_t x, uint8_t y);
+
+  enum class Stick : uint8_t {
+      MIN = 0,
+      NEUTRAL = 128,
+      MAX = 255,
+  };
+  ```
+
+  x and y are value between 0 and 255.
+  For x, 0 means left most, 255 means right most;
+  for y, 0 is bottom, 255 is top.
+
+### Aggregate
+
+In this part of APIs, you pass in a key code,
+then the package will switch to the corressponding handler.
+
+Joy stick code need to be generated using convert function methioned in last subsection.
+
+```cpp
+void SwitchController::Press(KeyCode code);
+void SwitchController::Release(KeyCode code);
+
+void SwitchController::Press(unsigned long code);
+void SwitchController::Release(unsigned long code);
+```
+
+## License
+
+[MIT](https://github.com/SirZenith/SwitchControlLibrary/blob/master/LICENSE)

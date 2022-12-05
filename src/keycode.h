@@ -17,10 +17,10 @@ namespace switch_controller {
         LCLICK = 1 << 10,
         RCLICK = 1 << 11,
         HOME = 1 << 12,
-        CAPTURE = 1 << 13
+        CAPTURE = 1 << 13,
     };
 
-    enum class Hat : uint8_t {
+    enum class Cross : uint8_t {
         UP = 0,
         UP_RIGHT = 1,
         RIGHT = 2,
@@ -29,10 +29,10 @@ namespace switch_controller {
         DOWN_LEFT = 5,
         LEFT = 6,
         UP_LEFT = 7,
-        NEUTRAL = 8
+        NEUTRAL = 8,
     };
 
-    enum class HatButton : uint8_t {
+    enum class CrossButton : uint8_t {
         UP = 1 << 0,
         RIGHT = 1 << 1,
         DOWN = 1 << 2,
@@ -42,15 +42,15 @@ namespace switch_controller {
     enum class Stick : uint8_t {
         MIN = 0,
         NEUTRAL = 128,
-        MAX = 255
+        MAX = 255,
     };
 
     enum class KeyType : uint16_t {
         BTN,
-        HAT,
-        HAT_BTN,
+        CROSS,
+        CROSS_BTN,
         L_STICK,
-        R_STICK
+        R_STICK,
     };
 
     constexpr unsigned long GenKeyCode(const KeyType type, const uint16_t value) {
@@ -62,18 +62,26 @@ namespace switch_controller {
     }
 
     constexpr unsigned long GenHatKeyCode(const uint16_t value) {
-        return GenKeyCode(KeyType::HAT, value);
+        return GenKeyCode(KeyType::CROSS, value);
     }
 
     constexpr unsigned long GenHatBtnKeyCode(const uint16_t value) {
-        return GenKeyCode(KeyType::HAT_BTN, value);
+        return GenKeyCode(KeyType::CROSS_BTN, value);
     }
 
     constexpr unsigned long GenLeftStickKeyCode(const uint8_t x, const uint8_t y) {
         return GenKeyCode(KeyType::L_STICK, (uint16_t)(x) << sizeof(uint8_t) | (uint16_t)(y));
     }
 
+    constexpr unsigned long GenLeftStickKeyCode(const Stick x, const Stick y) {
+        return GenKeyCode(KeyType::L_STICK, (uint16_t)(x) << sizeof(uint8_t) | (uint16_t)(y));
+    }
+
     constexpr unsigned long GenRightStickKeyCode(const uint8_t x, const uint8_t y) {
+        return GenKeyCode(KeyType::R_STICK, (uint16_t)(x) << sizeof(uint8_t) | (uint16_t)(y));
+    }
+
+    constexpr unsigned long GenRightStickKeyCode(const Stick x, const Stick y) {
         return GenKeyCode(KeyType::R_STICK, (uint16_t)(x) << sizeof(uint8_t) | (uint16_t)(y));
     }
 
@@ -93,19 +101,19 @@ namespace switch_controller {
         BTN_HOME = GenBtnKeyCode((uint16_t)Button::HOME),
         BTN_CAPTURE = GenBtnKeyCode((uint16_t)Button::CAPTURE),
 
-        HAT_UP = GenHatKeyCode((uint16_t)Hat::UP),
-        HAT_UP_RIGHT = GenHatKeyCode((uint16_t)Hat::UP_RIGHT),
-        HAT_RIGHT = GenHatKeyCode((uint16_t)Hat::RIGHT),
-        HAT_DOWN_RIGHT = GenHatKeyCode((uint16_t)Hat::DOWN_RIGHT),
-        HAT_DOWN = GenHatKeyCode((uint16_t)Hat::DOWN),
-        HAT_DOWN_LEFT = GenHatKeyCode((uint16_t)Hat::DOWN_LEFT),
-        HAT_LEFT = GenHatKeyCode((uint16_t)Hat::LEFT),
-        HAT_UP_LEFT = GenHatKeyCode((uint16_t)Hat::UP_LEFT),
-        HAT_NEUTRAL = GenHatKeyCode((uint16_t)Hat::NEUTRAL),
+        CROSS_UP = GenHatKeyCode((uint16_t)Cross::UP),
+        CROSS_UP_RIGHT = GenHatKeyCode((uint16_t)Cross::UP_RIGHT),
+        CROSS_RIGHT = GenHatKeyCode((uint16_t)Cross::RIGHT),
+        CROSS_DOWN_RIGHT = GenHatKeyCode((uint16_t)Cross::DOWN_RIGHT),
+        CROSS_DOWN = GenHatKeyCode((uint16_t)Cross::DOWN),
+        CROSS_DOWN_LEFT = GenHatKeyCode((uint16_t)Cross::DOWN_LEFT),
+        CROSS_LEFT = GenHatKeyCode((uint16_t)Cross::LEFT),
+        CROSS_UP_LEFT = GenHatKeyCode((uint16_t)Cross::UP_LEFT),
+        CROSS_NEUTRAL = GenHatKeyCode((uint16_t)Cross::NEUTRAL),
 
-        HAT_BTN_UP = GenHatBtnKeyCode((uint16_t)HatButton::UP),
-        HAT_BTN_RIGHT = GenHatBtnKeyCode((uint16_t)HatButton::RIGHT),
-        HAT_BTN_DOWN = GenHatBtnKeyCode((uint16_t)HatButton::DOWN),
-        HAT_BTN_LEFT = GenHatBtnKeyCode((uint16_t)HatButton::LEFT),
+        CROSS_BTN_UP = GenHatBtnKeyCode((uint16_t)CrossButton::UP),
+        CROSS_BTN_RIGHT = GenHatBtnKeyCode((uint16_t)CrossButton::RIGHT),
+        CROSS_BTN_DOWN = GenHatBtnKeyCode((uint16_t)CrossButton::DOWN),
+        CROSS_BTN_LEFT = GenHatBtnKeyCode((uint16_t)CrossButton::LEFT),
     };
 };

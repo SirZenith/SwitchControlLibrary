@@ -63,44 +63,44 @@ int switch_controller::HatState::HatStack::Contains(uint8_t btn) {
 
 // ----------------------------------------------------------------------------
 
-switch_controller::Hat switch_controller::HatState::GetHat() {
+switch_controller::Cross switch_controller::HatState::GetHat() {
     uint8_t hatButton = 0b0000;
     // taks only 2 latest pressed key
     for (int i = 1; i <= 2; ++i) {
         hatButton |= hatStack.Get(-i);
     }
 
-    Hat hat = Hat::NEUTRAL;
+    Cross hat = Cross::NEUTRAL;
     switch (hatButton) {
     case 0b0000:
-        hat = Hat::NEUTRAL;
+        hat = Cross::NEUTRAL;
         break;
     case 0b0001:
-        hat = Hat::UP;
+        hat = Cross::UP;
         break;
     case 0b0010:
-        hat = Hat::RIGHT;
+        hat = Cross::RIGHT;
         break;
     case 0b0011:
-        hat = Hat::UP_RIGHT;
+        hat = Cross::UP_RIGHT;
         break;
     case 0b0100:
-        hat = Hat::DOWN;
+        hat = Cross::DOWN;
         break;
     case 0b0110:
-        hat = Hat::DOWN_RIGHT;
+        hat = Cross::DOWN_RIGHT;
         break;
     case 0b1000:
-        hat = Hat::LEFT;
+        hat = Cross::LEFT;
         break;
     case 0b1001:
-        hat = Hat::UP_LEFT;
+        hat = Cross::UP_LEFT;
         break;
     case 0b1100:
-        hat = Hat::DOWN_LEFT;
+        hat = Cross::DOWN_LEFT;
         break;
     default:
-        hat = Hat::NEUTRAL;
+        hat = Cross::NEUTRAL;
         break;
     }
     return hat;
@@ -108,12 +108,12 @@ switch_controller::Hat switch_controller::HatState::GetHat() {
 
 switch_controller::HatState::HatState() {}
 
-switch_controller::Hat switch_controller::HatState::Press(uint8_t hatButton) {
+switch_controller::Cross switch_controller::HatState::Press(uint8_t hatButton) {
     hatStack.Push(hatButton);
     return GetHat();
 }
 
-switch_controller::Hat switch_controller::HatState::Release(uint8_t hatButton) {
+switch_controller::Cross switch_controller::HatState::Release(uint8_t hatButton) {
     hatStack.Erase(hatButton);
     return GetHat();
 }

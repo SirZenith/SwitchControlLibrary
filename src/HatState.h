@@ -6,8 +6,8 @@ namespace switch_controller {
     public:
         HatState();
 
-        Hat Press(uint8_t hatButton);
-        Hat Release(uint8_t hatButton);
+        Cross Press(uint8_t hatButton);
+        Cross Release(uint8_t hatButton);
 
     private:
         class HatStack {
@@ -32,6 +32,6 @@ namespace switch_controller {
 
         HatStack hatStack;
 
-        Hat GetHat();
+        Cross GetHat();
     };
 };
