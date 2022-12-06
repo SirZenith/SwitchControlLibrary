@@ -75,6 +75,9 @@ namespace switch_controller {
     public:
         SwitchController();
 
+        void Begin();
+        void End();
+        bool Ready();
         void SendReport();
 
         void Press(KeyCode code);

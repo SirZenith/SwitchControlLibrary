@@ -52,6 +52,25 @@ switch_controller::SwitchController::SwitchController() {
     inputData.hat = (int8_t)Cross::NEUTRAL;
 }
 
+void switch_controller::SwitchController::Begin() {
+    hid.begin();
+}
+
+void switch_controller::SwitchController::End() {
+    inputData.button = 0;
+    inputData.lx = (int8_t)Stick::NEUTRAL;
+    inputData.ly = (int8_t)Stick::NEUTRAL;
+    inputData.rx = (int8_t)Stick::NEUTRAL;
+    inputData.ry = (int8_t)Stick::NEUTRAL;
+    inputData.hat = (int8_t)Cross::NEUTRAL;
+
+    SendReport();
+}
+
+bool switch_controller::SwitchController::Ready() {
+    return hid.ready();
+}
+
 void switch_controller::SwitchController::SendReport() {
     hid.sendReport(0, &inputData, sizeof(USB_JoystickReport_Data_t));
 }
