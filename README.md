@@ -222,4 +222,4 @@ void SwitchController::Release(unsigned long code);
 
 ## License
 
-[MIT](https://github.com/SirZenith/SwitchControlLibrary/blob/master/LICENSE)
+[MIT](https://github.com/SirZenith/switch-controller/blob/master/LICENSE)
