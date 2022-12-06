@@ -42,29 +42,25 @@ const char *switch_controller::GetNameOfKeyCode(KeyCode code) {
 switch_controller::SwitchController::SwitchController() {
     hid.setPollInterval(1);
     hid.setReportDescriptor(HID_REPORT_DESCRIPTOR, sizeof(HID_REPORT_DESCRIPTOR));
-
-    memset(&inputData, 0, sizeof(USB_JoystickReport_Data_t));
-
-    inputData.lx = (int8_t)Stick::NEUTRAL;
-    inputData.ly = (int8_t)Stick::NEUTRAL;
-    inputData.rx = (int8_t)Stick::NEUTRAL;
-    inputData.ry = (int8_t)Stick::NEUTRAL;
-    inputData.hat = (int8_t)Cross::NEUTRAL;
 }
 
 void switch_controller::SwitchController::Begin() {
     hid.begin();
+    Reset();
 }
 
 void switch_controller::SwitchController::End() {
+    Reset();
+    SendReport();
+}
+
+void switch_controller::SwitchController::Reset() {
     inputData.button = 0;
     inputData.lx = (int8_t)Stick::NEUTRAL;
     inputData.ly = (int8_t)Stick::NEUTRAL;
     inputData.rx = (int8_t)Stick::NEUTRAL;
     inputData.ry = (int8_t)Stick::NEUTRAL;
     inputData.hat = (int8_t)Cross::NEUTRAL;
-
-    SendReport();
 }
 
 bool switch_controller::SwitchController::Ready() {

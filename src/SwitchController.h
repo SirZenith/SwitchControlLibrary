@@ -66,7 +66,7 @@ namespace switch_controller {
         uint8_t ly;
         uint8_t rx;
         uint8_t ry;
-        uint8_t vendorSpec;
+        uint8_t _vendorSpec;
     };
 
     // ------------------------------------------------------------------------
@@ -77,6 +77,7 @@ namespace switch_controller {
 
         void Begin();
         void End();
+        void Reset();
         bool Ready();
         void SendReport();
 
