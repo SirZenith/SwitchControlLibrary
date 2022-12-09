@@ -85,7 +85,7 @@ namespace switch_controller {
         return GenKeyCode(KeyType::R_STICK, (uint16_t)(x) << sizeof(uint8_t) | (uint16_t)(y));
     }
 
-    enum KeyCode : unsigned long {
+    enum class KeyCode : unsigned long {
         BTN_Y = GenBtnKeyCode((uint16_t)Button::Y),
         BTN_B = GenBtnKeyCode((uint16_t)Button::B),
         BTN_A = GenBtnKeyCode((uint16_t)Button::A),
